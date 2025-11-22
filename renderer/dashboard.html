@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zaf's Kitchen - Admin Dashboard</title>
+  <link rel="icon" type="image/png" href="logo/logo-border.png">
+
+  <!-- Google Fonts - Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    * {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes countUp {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .sidebar {
+      width: 5.5rem;
+      background-color: #DC2626;
+      transition: all 0.3s ease;
+    }
+    .sidebar:hover { width: 16rem; }
+    .nav-text {
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .sidebar:hover .nav-text {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    main {
+      margin-left: 5.5rem;
+      transition: margin-left 0.3s ease;
+    }
+    .sidebar:hover ~ main {
+      margin-left: 16rem;
+    }
+    .active-item {
+      background-color: #B91C1C;
+    }
+    .chart-container {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      height: 380px;
+      animation: slideInUp 0.6s ease-out;
+    }
+    
+    .stat-card {
+      animation: slideInUp 0.5s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    .stat-card:nth-child(5) { animation-delay: 0.5s; }
+
+    .stat-number {
+      animation: countUp 0.6s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .chart-container canvas {
+      max-height: 280px !important;
+    }
+
+    .page {
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .recent-booking-item {
+      animation: slideInLeft 0.4s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .recent-booking-item:nth-child(1) { animation-delay: 0.1s; }
+    .recent-booking-item:nth-child(2) { animation-delay: 0.2s; }
+    .recent-booking-item:nth-child(3) { animation-delay: 0.3s; }
+    .recent-booking-item:nth-child(4) { animation-delay: 0.4s; }
+    .recent-booking-item:nth-child(5) { animation-delay: 0.5s; }
+
+    /* Modal fixes */
+    .modal-backdrop {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+    
+    .modal-content {
+      transform: scale(0.9);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-open .modal-content {
+      transform: scale(1);
+      opacity: 1;
+    }
+    
+    /* Force input styles */
+    .modal-input {
+      background: white !important;
+      border: 1px solid #d1d5db !important;
+      color: #374151 !important;
+    }
+    
+    .modal-input:focus {
+      border-color: #DC2626 !important;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 flex min-h-screen" style="font-family: 'Poppins', sans-serif;">
+
+<!-- Sidebar -->
+<nav class="sidebar text-white flex flex-col justify-between fixed top-0 left-0 z-20 h-full shadow-lg">
+    <div>
+        <div class="flex items-center gap-3 px-5 py-5 border-b border-red-500">
+            <img src="logo/logo-border.png" alt="Zaf's Kitchen Logo" class="h-14 w-auto">
+            <span class="font-semibold text-xl nav-text">Zaf's Kitchen</span>
+        </div>
+
+      <ul class="mt-6 space-y-2">
+        <li class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer rounded-r-full hover:bg-red-700 transition-all duration-300 active-item" data-page="dashboard">
+          <i class="fas fa-home text-2xl"></i>
+          <span class="nav-text text-base font-medium">Dashboard</span>
+        </li>
+
+        <li class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer rounded-r-full hover:bg-red-700 transition-all duration-300" data-page="bookings">
+          <i class="fas fa-calendar-check text-2xl"></i>
+          <span class="nav-text text-base font-medium">Book Schedule</span>
+        </li>
+
+        <li class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer rounded-r-full hover:bg-red-700 transition-all duration-300" data-page="users">
+          <i class="fas fa-users text-2xl"></i>
+          <span class="nav-text text-base font-medium">User Management</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="border-t border-red-500 py-3">
+      <div class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer hover:bg-red-700 transition-all duration-300">
+        <i class="fas fa-sign-out-alt text-2xl"></i>
+        <span class="nav-text text-base font-medium">Logout</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main id="mainContent" class="flex-1 transition-all duration-300 p-8 overflow-y-auto">
+    
+    <!-- Dashboard -->
+    <section id="dashboard-page" class="page">
+      <!-- ... dashboard content remains the same ... -->
+    </section>
+
+    <!-- Bookings -->
+    <section id="bookings-page" class="page hidden">
+      <!-- ... bookings content remains the same ... -->
+    </section>
+
+    <!-- User Management -->
+    <section id="users-page" class="page hidden">
+      <!-- ... users content remains the same ... -->
+    </section>
+  </main>
+
+  <!-- Booking Details Modal -->
+  <div id="detailsModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50 modal-backdrop">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto modal-content">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Booking Details</h2>
+        <button onclick="closeModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      <div id="modalContent" class="text-gray-700 space-y-3"></div>
+      <div id="modalActions" class="mt-6 flex gap-3 justify-end border-t pt-4"></div>
+    </div>
+  </div>
+
+  <!-- User Details Modal -->
+  <div id="userDetailsModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50 modal-backdrop">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto modal-content">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">User Details</h2>
+        <button onclick="closeUserModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      <div id="userModalContent" class="text-gray-700 space-y-3"></div>
+      <div id="userModalActions" class="mt-6 flex gap-3 justify-end border-t pt-4"></div>
+    </div>
+  </div>
+
+  <!-- Rejection Reason Modal -->
+  <div id="rejectionModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50 modal-backdrop">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md modal-content">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Reject Booking</h2>
+        <button onclick="closeRejectionModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      
+      <form id="rejectionForm">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Reason for Rejection <span class="text-red-500">*</span>
+          </label>
+          <textarea 
+            id="rejectionReason" 
+            rows="4" 
+            required
+            placeholder="Please provide a detailed reason for rejecting this booking..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none modal-input"
+          ></textarea>
+          <p class="text-xs text-gray-500 mt-1">This reason will be sent to the customer.</p>
+        </div>
+
+        <div class="flex gap-3 justify-end">
+          <button 
+            type="button" 
+            onclick="closeRejectionModal()" 
+            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            <i class="fas fa-times"></i>
+            Reject Booking
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Extra Charges Modal -->
+  <div id="extraChargesModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50 modal-backdrop">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md modal-content">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Add Extra Charges</h2>
+        <button onclick="closeExtraChargesModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      
+      <form id="extraChargesForm">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Charge Description <span class="text-red-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="chargeDescription" 
+            required
+            placeholder="e.g., Location Surcharge, Delivery Fee, Setup Charge"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent modal-input"
+          />
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Amount to Add <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute left-3 top-2 text-gray-500">₱</span>
+            <input 
+              type="number" 
+              id="chargeAmount" 
+              required
+              step="100"
+              min="0"
+              placeholder="10000"
+              class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent modal-input"
+            />
+          </div>
+          <p class="text-xs text-gray-500 mt-1">This amount will be added to the current total price.</p>
+        </div>
+
+        <div class="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
+          <p class="text-sm text-blue-600">
+            <strong>Current Total:</strong> ₱<span id="currentTotalDisplay">0</span>
+          </p>
+          <p class="text-sm text-blue-600 mt-1">
+            <strong>New Total:</strong> ₱<span id="newTotalDisplay">0</span>
+          </p>
+        </div>
+
+        <div class="flex gap-3 justify-end">
+          <button 
+            type="button" 
+            onclick="closeExtraChargesModal()" 
+            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            <i class="fas fa-plus"></i>
+            Add Charge
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let allBookings = [];
+    let filteredBookings = [];
+    let allUsers = [];
+    let filteredUsers = [];
+    let currentBookingId = null;
+    let currentUserId = null;
+    let charts = {};
+
+    // Package mapping for display names
+    const packageNames = {
+      'silver': 'Silver Package (Birthday)',
+      'gold': 'Gold Package (Birthday)',
+      'platinum': 'Platinum Package (Birthday)',
+      'diamond': 'Diamond Package (Birthday)',
+      'basic_wedding': 'Basic Wedding Package',
+      'premium_wedding': 'Premium Wedding Package',
+      'silver_debut': 'Silver Debut Package',
+      'gold_debut': 'Gold Debut Package',
+      'platinum_debut': 'Platinum Debut Package',
+      'silver_corporate': 'Silver Corporate Package',
+      'gold_corporate': 'Gold Corporate Package',
+      'platinum_corporate': 'Platinum Corporate Package'
+    };
+
+    // Format time helper function
+    function formatTime(time) {
+      if (!time) return 'N/A';
+      
+      if (typeof time === 'string' && time.includes(':')) {
+        const [hours, minutes] = time.split(':');
+        let hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        hour = hour % 12 || 12;
+        return `${hour}:${minutes} ${ampm}`;
+      }
+      
+      return time;
+    }
+
+    // Format currency
+    function formatCurrency(amount) {
+      return '₱' + parseFloat(amount || 0).toLocaleString('en-PH', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      });
+    }
+
+    // ==================== MODAL MANAGEMENT SYSTEM ====================
+    
+    // Global modal state
+    let activeModal = null;
+    let modalEventListeners = new Map();
+
+    // Enhanced modal show function
+    function showModal(modalId) {
+      // Close any currently open modal
+      if (activeModal) {
+        closeModalById(activeModal);
+      }
+      
+      const modal = document.getElementById(modalId);
+      if (!modal) return;
+      
+      // Force enable all inputs
+      const inputs = modal.querySelectorAll('input, textarea, select');
+      inputs.forEach(input => {
+        input.disabled = false;
+        input.readOnly = false;
+        input.style.pointerEvents = 'auto';
+        input.style.opacity = '1';
+      });
+      
+      // Show modal with animation
+      modal.classList.remove('hidden');
+      modal.classList.add('modal-open');
+      
+      // Force focus on first input after a brief delay
+      setTimeout(() => {
+        const firstInput = modal.querySelector('input, textarea, select');
+        if (firstInput) {
+          firstInput.focus();
+          firstInput.select();
+        }
+      }, 100);
+      
+      activeModal = modalId;
+      
+      console.log(`✅ Modal ${modalId} opened successfully`);
+    }
+
+    // Enhanced modal close function
+    function closeModalById(modalId) {
+      const modal = document.getElementById(modalId);
+      if (!modal) return;
+      
+      // Reset forms
+      const forms = modal.querySelectorAll('form');
+      forms.forEach(form => {
+        form.reset();
+        // Remove any custom event listeners
+        const listeners = modalEventListeners.get(form);
+        if (listeners) {
+          listeners.forEach(([type, handler]) => {
+            form.removeEventListener(type, handler);
+          });
+          modalEventListeners.delete(form);
+        }
+      });
+      
+      // Hide modal
+      modal.classList.add('hidden');
+      modal.classList.remove('modal-open');
+      
+      if (activeModal === modalId) {
+        activeModal = null;
+      }
+      
+      console.log(`✅ Modal ${modalId} closed successfully`);
+    }
+
+    // Close all modals
+    function closeAllModals() {
+      const modals = ['detailsModal', 'userDetailsModal', 'rejectionModal', 'extraChargesModal'];
+      modals.forEach(modalId => closeModalById(modalId));
+    }
+
+    // ==================== UPDATED MODAL FUNCTIONS ====================
+
+    // View booking details
+    async function viewBooking(id) {
+      console.log('🔍 Looking for booking ID:', id);
+      
+      if (allBookings.length === 0) {
+        await loadBookings();
+      }
+
+      const booking = allBookings.find(b => String(b.id) === String(id));
+      
+      if (!booking) {
+        alert('Booking not found! ID: ' + id + '\n\nPlease refresh the bookings list and try again.');
+        console.error('❌ Booking ID not found:', id);
+        return;
+      }
+
+      console.log('✅ Booking found:', booking);
+      currentBookingId = id;
+
+      const content = document.getElementById('modalContent');
+      const actions = document.getElementById('modalActions');
+
+      const avatarUrl = booking.avatar_url;
+      const userName = booking.full_name || 'N/A';
+      const initials = userName.charAt(0).toUpperCase();
+
+      let menusDisplay = 'N/A';
+      if (booking.selected_menus) {
+        try {
+          const menus = typeof booking.selected_menus === 'string' 
+            ? JSON.parse(booking.selected_menus) 
+            : booking.selected_menus;
+          
+          if (Array.isArray(menus)) {
+            menusDisplay = menus.length > 0 ? menus.join(', ') : 'N/A';
+          } else if (typeof menus === 'object') {
+            menusDisplay = JSON.stringify(menus, null, 2);
+          } else {
+            menusDisplay = String(menus);
+          }
+        } catch (e) {
+          menusDisplay = String(booking.selected_menus);
+        }
+      }
+
+      const paymentStatus = booking.payment_status || 'unpaid';
+      const isPaid = paymentStatus === 'paid';
+
+      // Get package display name
+      const packageDisplay = packageNames[booking.food_package] || booking.food_package || 'N/A';
+
+      content.innerHTML = `
+        <div class="space-y-6">
+          <!-- Header Section -->
+          <div class="flex justify-between items-start pb-4 border-b">
+            <div class="flex items-center gap-3">
+              ${avatarUrl ? `
+                <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center overflow-hidden">
+                  <img src="${avatarUrl}" alt="${userName}" class="w-full h-full object-cover">
+                </div>
+              ` : `
+                <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-lg">
+                  ${initials}
+                </div>
+              `}
+              <div>
+                <h3 class="text-2xl font-bold text-gray-800">${userName}</h3>
+                <p class="text-gray-500 mt-1">Booking ID: ${booking.id}</p>
+                ${booking.user_email ? `<p class="text-sm text-gray-500">Email: ${booking.user_email}</p>` : ''}
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="px-4 py-2 rounded-full text-sm font-semibold ${
+                booking.booking_status === 'approved' ? 'bg-green-100 text-green-700' : 
+                booking.booking_status === 'rejected' ? 'bg-red-100 text-red-700' : 
+                'bg-yellow-100 text-yellow-700'
+              }">
+                ${booking.booking_status.toUpperCase()}
+              </span>
+              <div class="mt-2">
+                <span class="px-3 py-1 rounded-full text-xs font-semibold ${
+                  isPaid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                }">
+                  <i class="fas ${isPaid ? 'fa-money-bill-wave' : 'fa-exclamation-triangle'} mr-1"></i>
+                  Payment: ${paymentStatus.toUpperCase()}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Information Section -->
+          <div class="bg-${isPaid ? 'green' : 'yellow'}-50 p-4 rounded-lg border-l-4 border-${isPaid ? 'green' : 'yellow'}-600">
+            <h4 class="font-semibold text-${isPaid ? 'green' : 'yellow'}-700 mb-2 flex items-center gap-2">
+              <i class="fas ${isPaid ? 'fa-money-bill-wave' : 'fa-exclamation-triangle'}"></i>
+              Payment Status: ${paymentStatus.toUpperCase()}
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Total Amount</p>
+                <p class="text-2xl font-bold text-gray-800">${formatCurrency(booking.total_price || 0)}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Payment Deadline</p>
+                <p class="text-sm font-medium ${!isPaid && booking.booking_status === 'approved' ? 'text-red-600' : 'text-gray-600'}">
+                  ${isPaid ? 
+                    'Payment completed' : 
+                    booking.booking_status === 'approved' ? 
+                    '20 hours after approval' : 
+                    'After booking approval'
+                  }
+                </p>
+              </div>
+            </div>
+            ${!isPaid && booking.booking_status === 'approved' ? `
+              <div class="mt-3 p-3 bg-red-50 rounded border border-red-200">
+                <p class="text-sm text-red-600 flex items-center gap-2">
+                  <i class="fas fa-exclamation-circle"></i>
+                  <strong>Important:</strong> This booking will be automatically cancelled if payment is not made within 20 hours of approval.
+                </p>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Contact Information -->
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-address-book text-red-600"></i>
+              Contact Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Contact Number</p>
+                <p class="text-gray-800 font-medium">${booking.contact_number || 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Location</p>
+                <p class="text-gray-800 font-medium">${booking.location || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Event Details -->
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-calendar-alt text-red-600"></i>
+              Event Details
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Event Type</p>
+                <p class="text-gray-800 font-medium">${booking.event_type || 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Event Date</p>
+                <p class="text-gray-800 font-medium">${booking.event_date ? new Date(booking.event_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Time Schedule</p>
+                <p class="text-gray-800 font-medium">${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Event Theme</p>
+                <p class="text-gray-800 font-medium">${booking.event_theme || 'N/A'}</p>
+              </div>
+              ${booking.custom_theme ? `
+                <div>
+                  <p class="text-xs text-gray-500 uppercase tracking-wide">Custom Theme</p>
+                  <p class="text-gray-800 font-medium">${booking.custom_theme}</p>
+                </div>
+              ` : ''}
+              ${booking.theme_suggestions ? `
+                <div class="md:col-span-2">
+                  <p class="text-xs text-gray-500 uppercase tracking-wide">Theme Suggestions</p>
+                  <p class="text-gray-800 font-medium">${booking.theme_suggestions}</p>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Celebrant Information -->
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-birthday-cake text-red-600"></i>
+              Celebrant Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Celebrant Name</p>
+                <p class="text-gray-800 font-medium">${booking.celebrant_name || 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Age</p>
+                <p class="text-gray-800 font-medium">${booking.celebrant_age || 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Number of Guests</p>
+                <p class="text-gray-800 font-medium">${booking.guest_count || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Food & Menu -->
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-utensils text-red-600"></i>
+              Food & Menu Selection
+            </h4>
+            <div class="grid grid-cols-1 gap-3">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Food Package</p>
+                <p class="text-gray-800 font-medium">${packageDisplay}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Selected Menus</p>
+                <p class="text-gray-800 font-medium whitespace-pre-wrap">${menusDisplay}</p>
+              </div>
+            </div>
+          </div>
+
+          ${booking.rejection_reason ? `
+            <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
+              <h4 class="font-semibold text-red-700 mb-2 flex items-center gap-2">
+                <i class="fas fa-exclamation-circle"></i>
+                Rejection Reason
+              </h4>
+              <p class="text-red-600">${booking.rejection_reason}</p>
+            </div>
+          ` : ''}
+
+          <!-- Booking Information -->
+          <div class="pt-4 border-t">
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <i class="fas fa-clock"></i>
+              <span>Booking submitted on ${new Date(booking.created_at).toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: 'numeric', 
+                hour12: true 
+              })}</span>
+            </div>
+            ${booking.approved_at ? `
+            <div class="flex items-center gap-2 text-sm text-gray-500 mt-1">
+              <i class="fas fa-check-circle"></i>
+              <span>Approved on ${new Date(booking.approved_at).toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: 'numeric', 
+                hour12: true 
+              })}</span>
+            </div>
+            ` : ''}
+            ${isPaid ? `
+            <div class="flex items-center gap-2 text-sm text-green-500 mt-1">
+              <i class="fas fa-money-bill-wave"></i>
+              <span>Payment completed</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      actions.innerHTML = `
+        ${booking.booking_status === 'pending' ? `
+          <button onclick="approveBooking('${booking.id}')" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-check"></i> Approve Booking
+          </button>
+          <button onclick="showRejectionModal('${booking.id}')" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-times"></i> Reject Booking
+          </button>
+        ` : ''}
+        ${booking.booking_status === 'approved' && !isPaid ? `
+          <button onclick="markPaymentAsPaid('${booking.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-money-bill-wave"></i> Mark Payment as Paid
+          </button>
+        ` : ''}
+        ${booking.booking_status === 'approved' && isPaid ? `
+          <button onclick="showExtraChargesModal('${booking.id}')" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-plus-circle"></i> Add Extra Charges
+          </button>
+        ` : ''}
+        <button onclick="closeModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+          Close
+        </button>
+      `;
+
+      showModal('detailsModal');
+    }
+
+    // Show rejection reason modal
+    function showRejectionModal(bookingId) {
+      const textarea = document.getElementById('rejectionReason');
+      textarea.value = '';
+      
+      // Remove any existing form handlers
+      const form = document.getElementById('rejectionForm');
+      form.onsubmit = null;
+      
+      // Add fresh form handler
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const reason = textarea.value.trim();
+        
+        if (!reason) {
+          alert('Please provide a reason for rejection');
+          return;
+        }
+
+        try {
+          const result = await window.api.updateBookingStatus(bookingId, 'rejected', reason);
+          if (!result.success) throw new Error(result.error);
+          
+          const booking = allBookings.find(b => String(b.id) === String(bookingId));
+          if (booking && booking.user_email) {
+            const emailResult = await window.api.sendBookingRejectionEmail({
+              email: booking.user_email,
+              full_name: booking.full_name,
+              booking_id: booking.id,
+              rejection_reason: reason
+            });
+            
+            if (!emailResult.success) {
+              console.warn('⚠️ Could not send rejection email:', emailResult.message);
+            }
+          }
+          
+          closeRejectionModal();
+          closeModal();
+          alert('Booking rejected successfully! Customer has been notified via email.');
+          loadBookings();
+          loadDashboardStats();
+          loadCharts();
+        } catch (err) {
+          alert(`Error: ${err.message}`);
+          console.error('Error rejecting booking:', err);
+        }
+      };
+
+      showModal('rejectionModal');
+      setTimeout(() => textarea.focus(), 100);
+    }
+
+    // Show extra charges modal - COMPLETELY REWRITTEN
+    function showExtraChargesModal(bookingId) {
+      const booking = allBookings.find(b => String(b.id) === String(bookingId));
+      if (!booking) {
+        alert('Booking not found');
+        return;
+      }
+
+      // Reset form completely
+      const form = document.getElementById('extraChargesForm');
+      form.reset();
+      
+      const descInput = document.getElementById('chargeDescription');
+      const amountInput = document.getElementById('chargeAmount');
+      
+      descInput.value = '';
+      amountInput.value = '';
+      
+      // Display current total
+      const currentTotal = parseFloat(booking.total_price || 0);
+      document.getElementById('currentTotalDisplay').textContent = 
+        currentTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('newTotalDisplay').textContent = 
+        currentTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      // Remove any existing event listeners
+      const newDescInput = descInput.cloneNode(true);
+      const newAmountInput = amountInput.cloneNode(true);
+      descInput.parentNode.replaceChild(newDescInput, descInput);
+      amountInput.parentNode.replaceChild(newAmountInput, amountInput);
+      
+      // Get fresh references
+      const freshDescInput = document.getElementById('chargeDescription');
+      const freshAmountInput = document.getElementById('chargeAmount');
+      
+      // Add fresh input event listener
+      freshAmountInput.addEventListener('input', function() {
+        const currentTotal = parseFloat(booking.total_price || 0);
+        const addAmount = parseFloat(this.value || 0);
+        const newTotal = currentTotal + addAmount;
+        document.getElementById('newTotalDisplay').textContent = 
+          newTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      });
+
+      // Remove any existing form handler and add fresh one
+      form.onsubmit = null;
+      
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const description = freshDescInput.value.trim();
+        const amount = parseFloat(freshAmountInput.value || 0);
+        
+        if (!description) {
+          alert('Please provide a charge description');
+          freshDescInput.focus();
+          return;
+        }
+
+        if (amount <= 0 || isNaN(amount)) {
+          alert('Please enter a valid amount to add');
+          freshAmountInput.focus();
+          return;
+        }
+
+        try {
+          const currentTotal = parseFloat(booking.total_price || 0);
+          const newTotal = currentTotal + amount;
+          
+          const result = await window.api.addExtraCharge(bookingId, description, amount, newTotal);
+          if (!result.success) throw new Error(result.error);
+          
+          closeExtraChargesModal();
+          closeModal();
+          alert(`Extra charge (${description}: ${formatCurrency(amount)}) added successfully!\n\nNew Total: ${formatCurrency(newTotal)}`);
+          loadBookings();
+          loadDashboardStats();
+          loadCharts();
+        } catch (err) {
+          alert(`Error: ${err.message}`);
+          console.error('Error adding extra charge:', err);
+        }
+      };
+
+      showModal('extraChargesModal');
+      
+      // Force focus after modal is fully shown
+      setTimeout(() => {
+        freshDescInput.focus();
+        freshDescInput.select();
+        
+        // Double-check inputs are enabled
+        freshDescInput.disabled = false;
+        freshAmountInput.disabled = false;
+        freshDescInput.readOnly = false;
+        freshAmountInput.readOnly = false;
+      }, 150);
+    }
+
+    // Close modal functions
+    function closeModal() {
+      closeModalById('detailsModal');
+    }
+
+    function closeUserModal() {
+      closeModalById('userDetailsModal');
+    }
+
+    function closeRejectionModal() {
+      closeModalById('rejectionModal');
+    }
+
+    function closeExtraChargesModal() {
+      closeModalById('extraChargesModal');
+    }
+
+    // ==================== OTHER FUNCTIONS (REMAIN THE SAME) ====================
+
+    // Navigation
+    const navItems = document.querySelectorAll('.nav-item');
+    const pages = document.querySelectorAll('.page');
+
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        navItems.forEach(i => i.classList.remove('active-item'));
+        item.classList.add('active-item');
+        const target = item.getAttribute('data-page');
+        pages.forEach(p => p.classList.add('hidden'));
+        document.getElementById(`${target}-page`).classList.remove('hidden');
+        
+        if (target === 'bookings') {
+          loadBookings();
+        } else if (target === 'dashboard') {
+          loadDashboardStats();
+          loadCharts();
+        } else if (target === 'users') {
+          loadUsers();
+        }
+      });
+    });
+
+    // Add escape key listener to close modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && activeModal) {
+        closeModalById(activeModal);
+      }
+    });
+
+    // Add click outside to close modals
+    document.addEventListener('click', (e) => {
+      if (activeModal && e.target.classList.contains('modal-backdrop')) {
+        closeModalById(activeModal);
+      }
+    });
+
+    // ... (rest of your existing functions like loadDashboardStats, loadBookings, etc. remain the same)
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDashboardStats();
+      loadCharts();
+      checkForExpiredBookings();
+      
+      // Force enable all modal inputs on startup
+      setTimeout(() => {
+        const allInputs = document.querySelectorAll('input, textarea, select');
+        allInputs.forEach(input => {
+          input.disabled = false;
+          input.readOnly = false;
+        });
+      }, 1000);
+    });
+
+  </script>
+</body>
+</html>
